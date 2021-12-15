@@ -28,6 +28,7 @@ def url_read_csv(url):
         df['side'] = np.where(df['side'] == 'BUY', 1, -1).astype('int8')
         return df
     except urllib.error.HTTPError:
+        print(f"urllib.error.HTTPError {urllib.error.HTTPError}")
         pass
     return None
 
@@ -39,12 +40,16 @@ class GmoFetcher:
         if memory is None:
             self._url_exists = url_exists
             self._url_read_csv = url_read_csv
+            print("self._url_exists = url_exists")
+            print("self._url_read_csv = url_read_csv")
         else:
             url_exists_cached = memory.cache(url_exists)
             self._url_exists = url_exists_cached
 
             url_read_csv_cached = memory.cache(url_read_csv)
             self._url_read_csv = url_read_csv_cached
+            print("self._url_exists = url_exists_cached")
+            print("self._url_read_csv = url_read_csv_cached")
 
     def fetch_ohlcv(self, interval_sec=None, market=None):
         return self.fetch_trades(market=market, interval_sec=interval_sec)
@@ -59,7 +64,9 @@ class GmoFetcher:
         date = datetime.date(start_year, start_month, 1)
 
         dfs = []
+        count = 0
         while date < today:
+            if count%30 == 0: print(date, end=".")
             url = 'https://api.coin.z.com/data/trades/{}/{}/{:02}/{}{:02}{:02}_{}.csv.gz'.format(
                 market,
                 date.year,
@@ -86,6 +93,7 @@ class GmoFetcher:
                 dfs.append(df)
 
             date += datetime.timedelta(days=1)
+            count += 1
 
         df = pd.concat(dfs)
 
